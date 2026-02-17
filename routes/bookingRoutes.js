@@ -8,7 +8,7 @@ const {
   getAllBookingsAdmin,
   updateBookingStatus,
   sendBookingEmail
-} = require("../controllers/bookingController");
+} = require("../Controllers/bookingController");
 
 // Public routes
 router.post("/", createBooking);
