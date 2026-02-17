@@ -5,7 +5,7 @@ const {
   createComplaint,
   getComplaints,
   deleteComplaint
-} = require("../controllers/complaintController");
+} = require("../Controllers/complaintController");
 
 // Public routes
 router.post("/", createComplaint);
