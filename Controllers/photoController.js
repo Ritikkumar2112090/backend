@@ -1,4 +1,4 @@
-const Photo = require("../Models/Photo");
+const Photo = require("../models/Photo");
 const path = require("path");
 const fs = require("fs");
 
@@ -6,10 +6,7 @@ const fs = require("fs");
 exports.uploadPhotos = async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "No files uploaded"
-      });
+      return res.status(400).json({ success: false, message: "No files uploaded" });
     }
 
     const uploadedPhotos = [];
@@ -19,79 +16,45 @@ exports.uploadPhotos = async (req, res) => {
         originalName: file.originalname,
         filename: file.filename,
         mimetype: file.mimetype,
-        path: file.path,
+        path: `uploads/${file.filename}`,
         size: file.size,
         isPreloaded: false
       });
-
       uploadedPhotos.push(photo);
     }
 
     res.status(201).json({
       success: true,
       message: `${uploadedPhotos.length} photo(s) uploaded successfully`,
-      data: {
-        photos: uploadedPhotos
-      }
+      data: { photos: uploadedPhotos }
     });
-
   } catch (error) {
-    console.error("Upload error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Get all photos (for gallery)
+// Get all photos
 exports.getPhotos = async (req, res) => {
   try {
     const photos = await Photo.find().sort({ createdAt: -1 });
-    
-    res.json({
-      success: true,
-      data: {
-        photos: photos
-      }
-    });
-
+    res.json({ success: true, data: { photos } });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Get single photo by ID (to serve the actual file)
+// Serve single photo file
 exports.getPhotoById = async (req, res) => {
   try {
     const photo = await Photo.findById(req.params.id);
+    if (!photo) return res.status(404).json({ success: false, message: "Photo not found" });
 
-    if (!photo) {
-      return res.status(404).json({
-        success: false,
-        message: "Photo not found"
-      });
-    }
+    const filePath = path.join(__dirname, "..", photo.path);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ success: false, message: "Photo file missing" });
 
-    // Check if file exists
-    if (!fs.existsSync(photo.path)) {
-      return res.status(404).json({
-        success: false,
-        message: "Photo file not found on server"
-      });
-    }
-
-    // Send the file
-    res.sendFile(path.resolve(photo.path));
-
+    res.sendFile(filePath);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -99,31 +62,14 @@ exports.getPhotoById = async (req, res) => {
 exports.deletePhoto = async (req, res) => {
   try {
     const photo = await Photo.findById(req.params.id);
+    if (!photo) return res.status(404).json({ success: false, message: "Photo not found" });
 
-    if (!photo) {
-      return res.status(404).json({
-        success: false,
-        message: "Photo not found"
-      });
-    }
+    const filePath = path.join(__dirname, "..", photo.path);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    // Delete file from filesystem
-    if (fs.existsSync(photo.path)) {
-      fs.unlinkSync(photo.path);
-    }
-
-    // Delete from database
     await Photo.findByIdAndDelete(req.params.id);
-
-    res.json({
-      success: true,
-      message: "Photo deleted successfully"
-    });
-
+    res.json({ success: true, message: "Photo deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
