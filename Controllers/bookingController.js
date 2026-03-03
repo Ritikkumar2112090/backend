@@ -8,8 +8,8 @@ exports.createBooking = async (req, res) => {
     const booking = await Booking.create(req.body);
             
     // Send Emails
-    await sendEmail(booking);
-                    4
+    // await sendEmail(booking);
+                    
     res.status(201).json({
       success: true,
       message: "Booking created successfully",
