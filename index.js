@@ -10,8 +10,14 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
 app.use(express.json());
+
+// CORS: allow your Vercel frontend explicitly
+app.use(cors({
+  origin: "https://vrindavansaathi.vercel.app", // <-- frontend URL
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -22,7 +28,7 @@ app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/complaints", require("./routes/complaintRoutes"));
 app.use("/api/photos", require("./routes/photoRoutes"));
 
-
+// Test route
 app.get("/", (req, res) => {
   res.send("API Running 🚀");
 });
