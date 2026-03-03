@@ -7,12 +7,12 @@ exports.createComplaint = async (req, res) => {
     const complaint = await Complaint.create(req.body);
 
     // Send Email - catch errors to avoid hanging request
-    try {
-      await sendComplaintEmail(complaint);
-    } catch (emailError) {
-      console.error("Error sending complaint email:", emailError);
-      // Proceed without failing the request
-    }
+    // try {
+    //   await sendComplaintEmail(complaint);
+    // } catch (emailError) {
+    //   console.error("Error sending complaint email:", emailError);
+    //   // Proceed without failing the request
+    // }
 
     res.status(201).json({
       success: true,
