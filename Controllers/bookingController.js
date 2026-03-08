@@ -4,16 +4,49 @@ const sendEmail = require("../utils/sendEmail");
 // Create Booking
 exports.createBooking = async (req, res) => {
   try {
-          
+    console.log("Booking request received");
+
+    // Save booking to database
     const booking = await Booking.create(req.body);
-            
-    // Send Emails
-    await sendEmail(booking);
-                    
+
+    console.log("Booking saved:", booking._id);
+
+    // Send response FIRST (this fixes the loading issue)
     res.status(201).json({
       success: true,
       message: "Booking created successfully",
       booking
+    });
+
+    // Send email in background (non-blocking)
+    sendEmail(booking)
+      .then(() => {
+        console.log("Email sent successfully");
+      })
+      .catch((error) => {
+        console.error("Email failed:", error.message);
+      });
+
+  } catch (error) {
+    console.error("Booking error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
+// Get All Bookings
+exports.getBookings = async (req, res) => {
+  try {
+
+    const bookings = await Booking.find().sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: bookings
     });
 
   } catch (error) {
@@ -27,42 +60,46 @@ exports.createBooking = async (req, res) => {
 };
 
 
-// Get All Bookings
-exports.getBookings = async (req, res) => {
-  try {
-
-    const bookings = await Booking.find().sort({ createdAt: -1 });
-    res.json(bookings);
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-
 // Delete Booking
 exports.deleteBooking = async (req, res) => {
   try {
 
-    await Booking.findByIdAndDelete(req.params.id);
-    res.json({ message: "Booking deleted" });
+    const booking = await Booking.findByIdAndDelete(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Booking deleted"
+    });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
   }
 };
 
-// Get All Bookings for Admin (with status)
+
+// Get All Bookings for Admin
 exports.getAllBookingsAdmin = async (req, res) => {
   try {
+
     const bookings = await Booking.find().sort({ createdAt: -1 });
-    
-    // Add status field to each booking if not present
-    const bookingsWithStatus = bookings.map(booking => ({
+
+    const bookingsWithStatus = bookings.map((booking) => ({
       ...booking.toObject(),
-      status: booking.status || 'pending'
+      status: booking.status || "pending"
     }));
-    
+
     res.json({
       success: true,
       data: {
@@ -71,15 +108,22 @@ exports.getAllBookingsAdmin = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
   }
 };
+
 
 // Update Booking Status
 exports.updateBookingStatus = async (req, res) => {
   try {
+
     const { status } = req.body;
-    
+
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
       { status },
@@ -87,9 +131,9 @@ exports.updateBookingStatus = async (req, res) => {
     );
 
     if (!booking) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Booking not found" 
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found"
       });
     }
 
@@ -100,23 +144,29 @@ exports.updateBookingStatus = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
   }
 };
 
-// Send Booking Email
+
+// Send Booking Email manually
 exports.sendBookingEmail = async (req, res) => {
   try {
+
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Booking not found" 
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found"
       });
     }
 
-    // Send confirmation email
     await sendEmail(booking);
 
     res.json({
@@ -125,6 +175,11 @@ exports.sendBookingEmail = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
   }
 };
