@@ -19,13 +19,13 @@ exports.createBooking = async (req, res) => {
     });
 
     // Send email in background (non-blocking)
-    sendEmail(booking)
-      .then(() => {
-        console.log("Email sent successfully");
-      })
-      .catch((error) => {
-        console.error("Email failed:", error.message);
-      });
+    // sendEmail(booking)
+    //   .then(() => {
+    //     console.log("Email sent successfully");
+    //   })
+    //   .catch((error) => {
+    //     console.error("Email failed:", error.message);
+    //   });
 
   } catch (error) {
     console.error("Booking error:", error.message);
